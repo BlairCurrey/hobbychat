@@ -1,4 +1,5 @@
 import type { KickTarget } from "./room.ts";
+import { isValidSlug } from "./rooms.ts";
 import type { BanKind, BanStore, MessageStore, StoredMessage } from "./stores.ts";
 
 /** Pushes admin actions into live rooms (Durable Object RPC on Cloudflare). */
@@ -100,6 +101,7 @@ export function createAdminApi(deps: AdminDeps): (request: Request, path: string
     }
 
     if (resource === "rooms" && parts.length === 3 && method === "DELETE") {
+      if (!isValidSlug(a!) || !isValidSlug(b!)) return fail(400, "Invalid app or room");
       const ids = await deps.messages.deleteRoom(a!, b!);
       if (ids.length) await deps.notifier.deleted(a!, b!, ids);
       return json({ deleted: ids.length });
@@ -131,7 +133,7 @@ export function createAdminApi(deps: AdminDeps): (request: Request, path: string
         expiresAt: duration === null ? null : createdAt + duration,
       };
       await deps.bans.add(ban);
-      if (body.app && body.room) {
+      if (body.app && body.room && isValidSlug(body.app) && isValidSlug(body.room)) {
         await deps.notifier.kick(body.app, body.room, body.kind === "uid" ? { uid: body.value } : { ipHash: body.value });
       }
       return json({ ban }, 201);
