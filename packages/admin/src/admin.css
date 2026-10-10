@@ -1,0 +1,36 @@
+:root {
+  --bg: #fff; --fg: #1f2328; --muted: #6e7781; --border: #d0d7de; --accent: #0969da; --danger: #cf222e; --row: #f6f8fa;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0d1117; --fg: #e6edf3; --muted: #8d96a0; --border: #30363d; --accent: #4493f8; --danger: #f85149; --row: #161b22; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--fg); }
+header { display: flex; align-items: center; gap: 24px; padding: 12px 24px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+h1 { font-size: 18px; margin: 0; }
+nav { display: flex; gap: 4px; }
+main { padding: 16px 24px; }
+button {
+  font: inherit; padding: 5px 10px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--border); background: transparent; color: inherit;
+}
+button:hover { border-color: var(--accent); }
+nav button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.danger { color: var(--danger); }
+button.danger:hover { border-color: var(--danger); }
+button.link { border: 0; padding: 0; color: var(--accent); }
+input { font: inherit; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: inherit; }
+form { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; }
+th, td { padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tbody tr:hover { background: var(--row); }
+td.body { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 60ch; }
+td.actions { white-space: nowrap; text-align: right; }
+td.actions button + button { margin-left: 4px; }
+.muted { color: var(--muted); font-size: 12px; }
+code { font-size: 12px; }
+#more { margin-top: 12px; }
+#status { color: var(--muted); }
+#status.error { color: var(--danger); }

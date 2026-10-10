@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>hobbychat admin</title>
+    <link rel="stylesheet" href="/admin/admin.css" />
+    <script type="module" src="/admin/admin.js"></script>
+  </head>
+  <body>
+    <header>
+      <h1>hobbychat admin</h1>
+      <nav>
+        <button data-tab="messages" class="active">Messages</button>
+        <button data-tab="rooms">Rooms</button>
+        <button data-tab="bans">Bans</button>
+      </nav>
+    </header>
+    <main>
+      <section id="messages">
+        <form id="filters">
+          <input name="app" placeholder="app" />
+          <input name="room" placeholder="room" />
+          <input name="uid" placeholder="user id" />
+          <button type="submit">Filter</button>
+          <button type="reset">Clear</button>
+        </form>
+        <table>
+          <thead><tr><th>Time</th><th>Where</th><th>Who</th><th>Message</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <button id="more" hidden>Load more</button>
+      </section>
+      <section id="rooms" hidden>
+        <table>
+          <thead><tr><th>App</th><th>Room</th><th>Messages</th><th>Last message</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+      <section id="bans" hidden>
+        <table>
+          <thead><tr><th>Type</th><th>Value</th><th>Reason</th><th>Since</th><th>Expires</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+      <p id="status" role="status"></p>
+    </main>
+  </body>
+</html>

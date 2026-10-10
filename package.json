@@ -2,13 +2,17 @@
   "name": "hobbychat",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@10.29.3",
   "scripts": {
+    "dev": "node packages/cloudflare/scripts/setup-dev.mjs && wrangler d1 migrations apply DB --local && wrangler dev",
+    "deploy": "wrangler d1 migrations apply DB --remote && wrangler deploy",
+    "build": "node packages/cloudflare/scripts/build-assets.mjs",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck"
   },
   "devDependencies": {
+    "@hobbychat/core": "workspace:*",
     "typescript": "^7.0.2",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "wrangler": "^4.151.0"
   }
 }

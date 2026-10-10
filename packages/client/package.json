@@ -1,0 +1,17 @@
+{
+  "name": "@hobbychat/client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Browser client and <hobby-chat> web component for hobbychat",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@hobbychat/protocol": "workspace:*"
+  }
+}

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>hobbychat</title>
+    <style>
+      body { font: 16px/1.5 system-ui, sans-serif; max-width: 40rem; margin: 4rem auto; padding: 0 1rem; color-scheme: light dark; }
+      code, pre { font-size: 14px; }
+      pre { padding: 12px; border: 1px solid #8884; border-radius: 8px; overflow-x: auto; }
+    </style>
+  </head>
+  <body>
+    <h1>hobbychat is running</h1>
+    <p>Add chat to a page on an allowed origin:</p>
+    <pre><code>&lt;script src="<span id="origin">https://your-server</span>/client.js"&gt;&lt;/script&gt;
+&lt;hobby-chat app="my-app" room="lobby"&gt;&lt;/hobby-chat&gt;</code></pre>
+    <p>Moderate at <a href="/admin/">/admin</a>.</p>
+    <script>document.getElementById("origin").textContent = location.origin;</script>
+  </body>
+</html>

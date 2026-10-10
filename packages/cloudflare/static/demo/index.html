@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>hobbychat demo</title>
+    <style>
+      body { font: 15px/1.5 system-ui, sans-serif; max-width: 52rem; margin: 2rem auto; padding: 0 1rem; color-scheme: light dark; }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      @media (max-width: 640px) { .row { grid-template-columns: 1fr; } }
+      hobby-chat { height: 420px; }
+    </style>
+    <script src="/client.js"></script>
+  </head>
+  <body>
+    <h1>hobbychat demo</h1>
+    <p>
+      Two widgets in the same room. Open this page in another tab (or a private window for a
+      different name) to chat with yourself. Moderate at <a href="/admin/">/admin</a>.
+    </p>
+    <div class="row">
+      <hobby-chat app="demo" room="lobby"></hobby-chat>
+      <hobby-chat app="demo" room="lobby" placeholder="Same room, same name (shared token)"></hobby-chat>
+    </div>
+  </body>
+</html>

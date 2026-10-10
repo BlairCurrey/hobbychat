@@ -1,0 +1,2 @@
+# Secret used to sign user tokens and hash IPs. Generate with: openssl rand -hex 32
+HMAC_SECRET=

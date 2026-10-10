@@ -1,0 +1,13 @@
+{
+  "name": "@hobbychat/admin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Static admin dashboard for hobbychat (talks to /admin/api)",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "devDependencies": {
+    "@hobbychat/core": "workspace:*"
+  }
+}

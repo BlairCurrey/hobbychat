@@ -1,0 +1,45 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hobbychat",
+  "main": "packages/cloudflare/src/worker.ts",
+  "compatibility_date": "2026-10-01",
+
+  // Builds the browser client (/client.js) and the admin UI before dev and deploy.
+  "build": {
+    "command": "node packages/cloudflare/scripts/build-assets.mjs",
+    "watch_dir": ["packages/client/src", "packages/admin/src"]
+  },
+  "assets": {
+    "directory": "packages/cloudflare/dist/assets",
+    "binding": "ASSETS",
+    // Admin pages are checked for auth, and the demo page only exists in dev.
+    "run_worker_first": ["/admin", "/admin/*", "/demo", "/demo/*"]
+  },
+
+  "durable_objects": {
+    "bindings": [{ "name": "ROOMS", "class_name": "ChatRoom" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ChatRoom"] }],
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hobbychat",
+      "migrations_dir": "packages/cloudflare/migrations"
+    }
+  ],
+
+  // Daily cleanup: message retention, per-room caps, expired bans.
+  "triggers": { "crons": ["17 3 * * *"] },
+
+  "vars": {
+    // Extra allowed page origins, comma separated, e.g. "https://myapp.com,https://*.mysite.dev".
+    // Added to `defaults.origins` in chat.config.ts.
+    "ALLOWED_ORIGINS": "",
+    // Cloudflare Access settings for /admin. See docs/admin.md.
+    "ACCESS_TEAM_DOMAIN": "",
+    "ACCESS_AUD": ""
+  },
+
+  "observability": { "enabled": true }
+}
