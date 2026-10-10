@@ -1,0 +1,17 @@
+{
+  "name": "@hobbychat/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./memory": "./src/memory/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@hobbychat/protocol": "workspace:*"
+  }
+}
