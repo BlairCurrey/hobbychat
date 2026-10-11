@@ -1,7 +1,6 @@
 import type { AdminMessage, Ban, BanRequest, RoomSummary } from "@hobbychat/core";
 
 const API = "/admin/api";
-const IP_BAN_MS = 24 * 3_600_000;
 
 const $ = <T extends Element>(selector: string) => document.querySelector<T>(selector)!;
 
@@ -114,22 +113,78 @@ function messageRow(m: AdminMessage): HTMLTableRowElement {
           row.remove();
           setStatus("Message deleted.");
         }), "danger"),
-      button("Ban user", () => ban({ kind: "uid", value: m.uid, app: m.app, room: m.room }, m.name)),
-      ...(m.ipHash
-        ? [button("Ban IP 24h", () => ban({ kind: "ip", value: m.ipHash!, durationMs: IP_BAN_MS, app: m.app, room: m.room }, `${m.name}'s IP`))]
-        : []),
+      button("Ban…", () => openBanDialog(m)),
     ),
   );
   return row;
 }
 
-function ban(request: BanRequest, label: string): void {
-  const reason = prompt(`Ban ${label}? Optional reason:`);
-  if (reason === null) return;
-  void run(async () => {
-    await api("/bans", { method: "POST", body: JSON.stringify({ ...request, reason }) });
-    setStatus(`Banned ${label}.`);
-  });
+// ---- dialogs ----
+
+const banDialog = $<HTMLDialogElement>("#ban-dialog");
+const banForm = banDialog.querySelector("form")!;
+const field = <T extends HTMLElement = HTMLElement>(root: Element, name: string) =>
+  root.querySelector<T>(`[data-field="${name}"]`)!;
+const control = <T extends Element>(name: string) => banForm.elements.namedItem(name) as T;
+let banTarget: AdminMessage | null = null;
+
+function openBanDialog(m: AdminMessage): void {
+  banTarget = m;
+  banForm.reset();
+  field(banDialog, "name").textContent = m.name;
+  field(banDialog, "body").textContent = m.body;
+  field(banDialog, "error").textContent = "";
+  field(banDialog, "ip").hidden = !m.ipHash; // messages from clients without an IP can't be IP-banned
+  updateBanButton();
+  banDialog.showModal();
+}
+
+function updateBanButton(): void {
+  const any = control<HTMLInputElement>("uid").checked || control<HTMLInputElement>("ip").checked;
+  banForm.querySelector<HTMLButtonElement>('button[value="confirm"]')!.disabled = !any;
+}
+
+banForm.addEventListener("change", updateBanButton);
+
+banForm.addEventListener("submit", (e) => {
+  if (e.submitter?.getAttribute("value") !== "confirm" || !banTarget) return;
+  e.preventDefault();
+  const m = banTarget;
+  const reason = control<HTMLInputElement>("reason").value.trim() || null;
+  const duration = (name: string) => Number(control<HTMLSelectElement>(name).value) || null;
+  const requests: BanRequest[] = [];
+  if (control<HTMLInputElement>("uid").checked) {
+    requests.push({ kind: "uid", value: m.uid, durationMs: duration("uidDuration") });
+  }
+  if (control<HTMLInputElement>("ip").checked && m.ipHash) {
+    requests.push({ kind: "ip", value: m.ipHash, durationMs: duration("ipDuration") });
+  }
+  void (async () => {
+    try {
+      for (const r of requests) {
+        await api("/bans", { method: "POST", body: JSON.stringify({ ...r, reason, app: m.app, room: m.room }) });
+      }
+      banDialog.close();
+      const what = requests.map((r) => (r.kind === "uid" ? "browser" : "IP address")).join(" and ");
+      setStatus(`Banned ${m.name}'s ${what}.`);
+    } catch (err) {
+      field(banDialog, "error").textContent = (err as Error).message;
+    }
+  })();
+});
+
+const confirmDialog = $<HTMLDialogElement>("#confirm-dialog");
+
+/** Resolves true if the user clicks the action button. */
+function confirmAction(title: string, text: string, action: string): Promise<boolean> {
+  field(confirmDialog, "title").textContent = title;
+  field(confirmDialog, "text").textContent = text;
+  field(confirmDialog, "action").textContent = action;
+  confirmDialog.returnValue = "";
+  confirmDialog.showModal();
+  return new Promise((resolve) =>
+    confirmDialog.addEventListener("close", () => resolve(confirmDialog.returnValue === "confirm"), { once: true }),
+  );
 }
 
 // ---- rooms ----
@@ -149,8 +204,13 @@ async function loadRooms(): Promise<void> {
         el(
           "td",
           { className: "actions" },
-          button("Delete all messages", () => {
-            if (!confirm(`Delete all ${r.count} messages in ${r.app}/${r.room}?`)) return;
+          button("Delete all messages", async () => {
+            const sure = await confirmAction(
+              `Clear ${r.app} / ${r.room}?`,
+              `This permanently deletes all ${r.count} messages in this room, and they disappear for everyone right away.`,
+              "Delete all",
+            );
+            if (!sure) return;
             void run(async () => {
               await api(`/rooms/${encodeURIComponent(r.app)}/${encodeURIComponent(r.room)}`, { method: "DELETE" });
               row.remove();
@@ -175,7 +235,7 @@ async function loadBans(): Promise<void> {
       const row = el(
         "tr",
         {},
-        el("td", { text: b.kind === "uid" ? "User" : "IP" }),
+        el("td", { text: b.kind === "uid" ? "Browser" : "IP address" }),
         el("td", {}, el("code", { text: short(b.value), title: b.value })),
         el("td", { text: b.reason ?? "" }),
         el("td", { className: "muted", text: time(b.createdAt) }),

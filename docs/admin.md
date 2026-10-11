@@ -5,8 +5,23 @@ The admin page lives at `/admin` on your server. From it you can:
 - browse recent messages across all apps, filtered by app, room or user
 - delete a message (it disappears live for everyone in the room)
 - clear a whole room
-- ban a user (permanent until lifted) or their IP (24 hours), straight from one of their messages
+- ban someone straight from one of their messages (see below)
 - see and lift bans
+
+## Bans
+
+**Ban…** on a message opens a form with two options. You can pick either or both, each with its own duration (1 hour up to forever):
+
+| | Ban this browser | Ban their IP address |
+| - | - | - |
+| Blocks | One chat identity: the signed token their client saved (in `localStorage` for the standard client) | Every connection from their network |
+| Collateral damage | None | Anyone sharing the IP: schools, offices, mobile carriers |
+| Easy to dodge? | Yes: clear site data, use another browser, or a custom client that never sends its token | Harder: needs a different network or a VPN |
+| Default duration | Forever | 24 hours |
+
+Use a browser ban for most trolls. Add a short IP ban for persistent ones.
+
+Bans apply to **every app and room on the server**, not one app. The person is disconnected from the room the message came from right away. Everywhere else, they're blocked the next time they post or join.
 
 ## Securing it with Cloudflare Access
 
@@ -28,6 +43,5 @@ Cloudflare's dashboard changes over time, so menu names may differ slightly. If 
 ## Notes
 
 - **Locally**, `pnpm dev` turns on `DEV_MODE` in `.dev.vars`, which lets `localhost` into the admin page without Access. That only works on localhost, and `.dev.vars` is never deployed.
-- **IP bans** use a keyed hash of the IP. The raw IP is never stored. Shared IPs (schools, offices, mobile carriers) mean an IP ban can hit innocent people, which is why it expires after 24 hours.
-- **User bans** follow the browser's stored token. Someone can dodge one by clearing storage; combine it with an IP ban for persistent trolls.
+- **IP addresses are never stored.** Only a keyed hash is kept, which is enough to match a ban.
 - **Deletes are permanent.** There's no undo or trash.

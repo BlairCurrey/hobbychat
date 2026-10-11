@@ -39,11 +39,87 @@
       </section>
       <section id="bans" hidden>
         <table>
-          <thead><tr><th>Type</th><th>Value</th><th>Reason</th><th>Since</th><th>Expires</th><th></th></tr></thead>
+          <thead><tr><th>Banned</th><th>Value</th><th>Reason</th><th>Since</th><th>Expires</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
       </section>
       <p id="status" role="status"></p>
     </main>
+
+    <dialog id="ban-dialog">
+      <form method="dialog">
+        <h2>Ban <span data-field="name"></span></h2>
+        <blockquote data-field="body"></blockquote>
+
+        <fieldset>
+          <label class="choice">
+            <input type="checkbox" name="uid" checked />
+            <span>
+              <strong>Ban this browser</strong>
+              <small>
+                Blocks their chat identity (the name saved in their browser). Never affects anyone
+                else, but they can get around it by clearing site data or using another browser.
+              </small>
+            </span>
+          </label>
+          <label class="duration">
+            For
+            <select name="uidDuration">
+              <option value="3600000">1 hour</option>
+              <option value="86400000">24 hours</option>
+              <option value="604800000">7 days</option>
+              <option value="2592000000">30 days</option>
+              <option value="" selected>Forever</option>
+            </select>
+          </label>
+        </fieldset>
+
+        <fieldset data-field="ip">
+          <label class="choice">
+            <input type="checkbox" name="ip" />
+            <span>
+              <strong>Ban their IP address</strong>
+              <small>
+                Blocks everyone connecting from their network, even with a new identity. Schools,
+                offices and mobile carriers share IPs, so innocent people may be blocked too. Keep it short.
+              </small>
+            </span>
+          </label>
+          <label class="duration">
+            For
+            <select name="ipDuration">
+              <option value="3600000">1 hour</option>
+              <option value="86400000" selected>24 hours</option>
+              <option value="604800000">7 days</option>
+              <option value="2592000000">30 days</option>
+              <option value="">Forever</option>
+            </select>
+          </label>
+        </fieldset>
+
+        <label class="reason">
+          Reason <span class="muted">(optional, only you see it)</span>
+          <input name="reason" maxlength="500" autocomplete="off" />
+        </label>
+        <p class="muted">Applies to every app and room on this server. They're disconnected from this room right away.</p>
+        <p class="error" data-field="error"></p>
+
+        <div class="buttons">
+          <button value="cancel" formnovalidate>Cancel</button>
+          <button value="confirm" class="danger-fill">Ban</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="confirm-dialog">
+      <form method="dialog">
+        <h2 data-field="title"></h2>
+        <p data-field="text"></p>
+        <div class="buttons">
+          <button value="cancel">Cancel</button>
+          <button value="confirm" class="danger-fill" data-field="action"></button>
+        </div>
+      </form>
+    </dialog>
   </body>
 </html>
