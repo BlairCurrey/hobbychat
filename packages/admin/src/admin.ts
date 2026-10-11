@@ -113,7 +113,7 @@ function messageRow(m: AdminMessage): HTMLTableRowElement {
           row.remove();
           setStatus("Message deleted.");
         }), "danger"),
-      button("Ban…", () => openBanDialog(m)),
+      button("Ban", () => openBanDialog(m)),
     ),
   );
   return row;

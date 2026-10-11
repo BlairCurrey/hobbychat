@@ -10,7 +10,7 @@ The admin page lives at `/admin` on your server. From it you can:
 
 ## Bans
 
-**Ban…** on a message opens a form with two options. You can pick either or both, each with its own duration (1 hour up to forever):
+**Ban** on a message opens a form with two options. You can pick either or both, each with its own duration (1 hour up to forever):
 
 | | Ban this browser | Ban their IP address |
 | - | - | - |
