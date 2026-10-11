@@ -4,7 +4,7 @@
 //   /, /demo/         landing and dev demo pages
 // Run automatically by wrangler (see "build" in wrangler.jsonc).
 import { build } from "esbuild";
-import { cp, mkdir, rm } from "node:fs/promises";
+import { cp, mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -12,7 +12,6 @@ const here = dirname(fileURLToPath(import.meta.url));
 const packages = resolve(here, "../..");
 const out = resolve(here, "../dist/assets");
 
-await rm(out, { recursive: true, force: true });
 await mkdir(resolve(out, "admin"), { recursive: true });
 
 const common = { bundle: true, minify: true, target: "es2022", legalComments: "none", logLevel: "warning" };

@@ -27,18 +27,36 @@ export function randomName(random: () => number = Math.random): string {
 
 const CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
-/** ULID-style ID: 10 chars of time + 16 random chars, so IDs sort by creation time. */
+let lastTime = -1;
+let lastRandom: number[] = [];
+
+/**
+ * ULID-style ID: 10 chars of time + 16 random chars, so IDs sort by creation
+ * time. Within the same millisecond the random part is incremented, so IDs
+ * from one process also sort in creation order.
+ */
 export function newId(now: number = Date.now()): string {
+  let random: number[];
+  if (now <= lastTime) {
+    now = lastTime;
+    random = [...lastRandom];
+    for (let i = random.length - 1; i >= 0; i--) {
+      random[i] = (random[i]! + 1) % 32;
+      if (random[i] !== 0) break;
+    }
+  } else {
+    random = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b % 32);
+  }
+  lastTime = now;
+  lastRandom = random;
+
   let time = "";
   let t = now;
   for (let i = 0; i < 10; i++) {
     time = CROCKFORD[t % 32] + time;
     t = Math.floor(t / 32);
   }
-  const bytes = crypto.getRandomValues(new Uint8Array(16));
-  let rand = "";
-  for (const b of bytes) rand += CROCKFORD[b % 32];
-  return time + rand;
+  return time + random.map((d) => CROCKFORD[d]).join("");
 }
 
 // ---- HMAC ----
