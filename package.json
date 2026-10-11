@@ -14,5 +14,12 @@
     "typescript": "^7.0.2",
     "vitest": "^5.0.5",
     "wrangler": "^4.151.0"
+  },
+  "cloudflare": {
+    "bindings": {
+      "HMAC_SECRET": {
+        "description": "Signs user tokens and hashes IPs. Generate one with `openssl rand -hex 32`."
+      }
+    }
   }
 }
