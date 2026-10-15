@@ -28,7 +28,7 @@ D1 (one SQLite database): messages and bans
 | ---------------------- | -------------------------------------------------------------------- | -------------- |
 | `packages/protocol`    | Wire message types and validation                                    | no |
 | `packages/core`        | All the chat logic, written against store/hub interfaces; plus in-memory adapters (`@hobbychat/core/memory`) | no |
-| `packages/client`      | Headless client and `<hobby-chat>`                                   | no |
+| `packages/client`      | Headless client and `<hobby-chat>`; published to npm as `hobbychat` | no |
 | `packages/admin`       | Static admin UI                                                      | no |
 | `packages/cloudflare`  | Worker, Room Durable Object, D1 stores, Access auth, migrations      | yes |
 | `chat.config.ts`, `wrangler.jsonc` | The deployable app's config. They sit at the repo root because the Deploy button needs a self-contained project. | |
@@ -47,3 +47,13 @@ pnpm typecheck
 `pnpm dev` creates `.dev.vars` with a random secret and `DEV_MODE=true` on first run, and applies database migrations locally. To run the daily cleanup by hand: `curl "http://localhost:8787/cdn-cgi/local/scheduled"`.
 
 Schema changes go in a new file under `packages/cloudflare/migrations/`. `pnpm run deploy` applies them before deploying.
+
+## Publishing the client to npm
+
+```sh
+cd packages/client
+# bump "version" in package.json
+pnpm publish   # builds dist/ first (prepack); needs `npm login`
+```
+
+The package bundles the protocol types, so `packages/protocol` stays private. Keep the client and server versions in step: bump the minor version (before 1.0) whenever the wire protocol changes.

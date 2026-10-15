@@ -1,6 +1,16 @@
 # Using the client
 
-Your server serves the client at `/client.js`. Load it with a script tag. It registers the `<hobby-chat>` element and exposes `window.HobbyChat` for custom UIs.
+There are two ways to use hobbychat in a page:
+
+- **The `<hobby-chat>` widget**: a ready-made chat box.
+- **The headless client, `connect()`**: the connection, reconnecting and events with no UI, for building your own. The widget is built on it.
+
+Get them either from your server's `/client.js` script, or from npm as `hobbychat` (with TypeScript types):
+
+```ts
+import { connect } from "hobbychat"; // headless client
+import "hobbychat/widget";           // registers <hobby-chat>; set its `server` attribute
+```
 
 ## The `<hobby-chat>` widget
 
@@ -38,7 +48,7 @@ For deeper changes, target the `::part()`s: `container`, `header`, `messages` an
 ## Custom UI: the headless client
 
 ```js
-const chat = HobbyChat.connect({
+const chat = HobbyChat.connect({ // or `connect` imported from "hobbychat"
   url: "https://YOUR-SERVER",
   app: "my-game",
   room: "lobby",
@@ -66,7 +76,7 @@ Message bodies are plain text from strangers. **Always render them as text** (`t
 
 The client reconnects with backoff and sends a heartbeat every 30 seconds. It also stores a signed token in `localStorage`, so people keep their name across visits. Messages sent while reconnecting are queued.
 
-The same API is available as an ES module from `packages/client` if you bundle your own code. It isn't published to npm yet.
+Use the npm package from the same release as your server. Until 1.0, a minor version bump may need a server update too.
 
 ## Wire protocol
 

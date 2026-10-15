@@ -28,10 +28,13 @@ importers:
         version: link:../core
 
   packages/client:
-    dependencies:
+    devDependencies:
       '@hobbychat/protocol':
         specifier: workspace:*
         version: link:../protocol
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
 
   packages/cloudflare:
     dependencies:

@@ -1,17 +1,47 @@
 {
-  "name": "@hobbychat/client",
+  "name": "hobbychat",
   "version": "0.1.0",
-  "private": true,
-  "description": "Browser client and <hobby-chat> web component for hobbychat",
-  "type": "module",
-  "exports": {
-    ".": "./src/index.ts"
+  "description": "Browser client for hobbychat: real-time chat rooms for your hobby apps, self-hosted on Cloudflare.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BlairCurrey/hobbychat.git",
+    "directory": "packages/client"
   },
+  "homepage": "https://github.com/BlairCurrey/hobbychat#readme",
+  "keywords": [
+    "chat",
+    "websocket",
+    "realtime",
+    "cloudflare",
+    "web-component"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "./dist/widget.js",
+    "./src/widget.ts"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./widget": {
+      "types": "./dist/widget.d.ts",
+      "default": "./dist/widget.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
+    "build": "node scripts/build.mjs",
+    "prepack": "node scripts/build.mjs",
     "test": "vitest run",
     "typecheck": "tsc -p ."
   },
-  "dependencies": {
-    "@hobbychat/protocol": "workspace:*"
+  "devDependencies": {
+    "@hobbychat/protocol": "workspace:*",
+    "esbuild": "^0.28.2"
   }
 }

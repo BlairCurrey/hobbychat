@@ -1,5 +1,5 @@
 {
-  "name": "hobbychat",
+  "name": "hobbychat-server",
   "private": true,
   "type": "module",
   "scripts": {
