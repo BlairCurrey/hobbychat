@@ -51,7 +51,10 @@ chat.on("message", (m) => {
   // { id, room, uid, name, body, createdAt, clientId? }
 });
 chat.on("deleted", (id) => { /* remove message `id` */ });
-chat.on("error", (e) => { /* e.code: rate_limited | too_long | room_limit | invalid */ });
+chat.on("error", (e) => {
+  // e.code: rate_limited | too_long | room_limit | invalid
+  // e.clientId: set when a post was rejected; matches the value send() returned
+});
 chat.on("status", (s) => { /* connecting | open | closed | banned */ });
 
 const clientId = chat.send("hello!"); // the echoed message carries the same clientId

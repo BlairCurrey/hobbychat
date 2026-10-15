@@ -49,6 +49,12 @@ describe("parseServerMessage", () => {
     )?.toBeTruthy();
     expect(parseServerMessage('{"type":"deleted","id":"1"}')).toEqual({ type: "deleted", id: "1" });
     expect(parseServerMessage('{"type":"error","code":"rate_limited"}')?.type).toBe("error");
+    expect(parseServerMessage('{"type":"error","code":"too_long","clientId":"c1"}')).toEqual({
+      type: "error",
+      code: "too_long",
+      clientId: "c1",
+    });
+    expect(parseServerMessage('{"type":"error","code":"too_long","clientId":5}')).toBeNull();
   });
 
   it("ignores pong and junk", () => {

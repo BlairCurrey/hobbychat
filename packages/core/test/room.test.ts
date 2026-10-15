@@ -81,7 +81,7 @@ describe("post", () => {
     const t = setup();
     const a = t.connect();
     await a.frame({ type: "post", body: "hi", clientId: "x" });
-    expect(a.peer.last("error")?.code).toBe("invalid");
+    expect(a.peer.last("error")).toMatchObject({ code: "invalid", clientId: "x" });
   });
 
   it("rejects malformed frames and empty bodies", async () => {
@@ -89,7 +89,9 @@ describe("post", () => {
     const a = await t.join();
     await a.frame("not json");
     expect(a.peer.last("error")?.code).toBe("invalid");
+    expect(a.peer.last("error")).not.toHaveProperty("clientId"); // unparseable, so no clientId
     await a.post("   ");
+    expect(a.peer.last("error")).toMatchObject({ code: "invalid", clientId: "c0" });
     expect(a.peer.sent.filter((m) => m.type === "error")).toHaveLength(2);
     expect(t.messages.rows).toHaveLength(0);
   });
@@ -100,7 +102,7 @@ describe("post", () => {
     await a.post("🦦🦦🦦🦦🦦"); // 5 characters, 10 UTF-16 units
     expect(a.peer.last("message")).toBeDefined();
     await a.post("123456");
-    expect(a.peer.last("error")?.code).toBe("too_long");
+    expect(a.peer.last("error")).toMatchObject({ code: "too_long", clientId: "c1" });
   });
 
   it("rate limits per connection and refills over time", async () => {
@@ -108,7 +110,7 @@ describe("post", () => {
     const a = await t.join();
     for (let i = 0; i < 3; i++) await a.post(`m${i}`);
     await a.post("too many");
-    expect(a.peer.last("error")?.code).toBe("rate_limited");
+    expect(a.peer.last("error")).toMatchObject({ code: "rate_limited", clientId: "c3" });
     expect(t.messages.rows).toHaveLength(3);
 
     t.clock.advance(20_000); // one token back
@@ -124,7 +126,7 @@ describe("room policy and limits", () => {
     await (await t.join({ room: "r2" })).post("b");
     const third = await t.join({ room: "r3" });
     await third.post("c");
-    expect(third.peer.last("error")?.code).toBe("room_limit");
+    expect(third.peer.last("error")).toMatchObject({ code: "room_limit", clientId: "c0" });
 
     // Existing rooms keep working.
     const again = await t.join({ room: "r1" });

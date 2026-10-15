@@ -130,21 +130,21 @@ export class RoomService {
   private async post(hub: RoomHub, peer: Peer, message: PostMessage): Promise<void> {
     const state = peer.state;
     const user = state.user;
-    if (!user) return sendError(peer, "invalid", "Send hello first");
+    if (!user) return sendError(peer, "invalid", "Send hello first", message.clientId);
     const settings = this.deps.registry.settings(state.app);
-    if (!settings) return sendError(peer, "invalid", "Unknown app");
+    if (!settings) return sendError(peer, "invalid", "Unknown app", message.clientId);
 
     const body = message.body.trim();
-    if (!body) return sendError(peer, "invalid", "Empty message");
+    if (!body) return sendError(peer, "invalid", "Empty message", message.clientId);
     if ([...body].length > settings.maxMessageLength) {
-      return sendError(peer, "too_long", `Max ${settings.maxMessageLength} characters`);
+      return sendError(peer, "too_long", `Max ${settings.maxMessageLength} characters`, message.clientId);
     }
 
     // Rate limit before any storage reads so floods stay cheap.
     const now = this.now();
     const bucket = takeToken(state.bucket, settings.rateLimit, now);
     peer.setState({ ...state, bucket: bucket.next });
-    if (!bucket.allowed) return sendError(peer, "rate_limited", "Slow down");
+    if (!bucket.allowed) return sendError(peer, "rate_limited", "Slow down", message.clientId);
 
     if (await this.deps.bans.find({ uid: user.uid, ipHash: state.ipHash }, now)) return ban(peer);
 
@@ -153,7 +153,7 @@ export class RoomService {
     if (!(await this.deps.messages.hasMessages(state.app, state.room))) {
       const active = await this.deps.messages.countActiveRooms(state.app);
       if (active >= settings.maxActiveRooms) {
-        return sendError(peer, "room_limit", "This app has reached its room limit");
+        return sendError(peer, "room_limit", "This app has reached its room limit", message.clientId);
       }
     }
 
@@ -171,8 +171,8 @@ export class RoomService {
   }
 }
 
-function sendError(peer: Peer, code: ErrorCode, message?: string): void {
-  peer.send({ type: "error", code, message });
+function sendError(peer: Peer, code: ErrorCode, message?: string, clientId?: string): void {
+  peer.send(clientId === undefined ? { type: "error", code, message } : { type: "error", code, message, clientId });
 }
 
 function ban(peer: Peer): void {

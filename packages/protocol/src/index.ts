@@ -61,6 +61,8 @@ export interface ErrorMessage {
   type: "error";
   code: ErrorCode;
   message?: string;
+  /** Set when a post was rejected: the `clientId` of that post, so the UI can tell which message failed. */
+  clientId?: string;
 }
 
 export interface BannedMessage {
@@ -157,6 +159,7 @@ export function parseServerMessage(raw: string): ServerMessage | null {
       return isString(obj.id) ? { type: "deleted", id: obj.id } : null;
     case "error":
       if (!isString(obj.code) || !ERROR_CODES.includes(obj.code)) return null;
+      if (obj.clientId !== undefined && !isString(obj.clientId)) return null;
       return obj as unknown as ErrorMessage;
     case "banned":
       return { type: "banned" };

@@ -191,8 +191,8 @@ export class HobbyChatElement extends HTMLElement {
       this.renderEmpty();
     });
     client.on("error", (e) => {
-      // A rejected post never echoes back, so drop the optimistic copy.
-      this.list.querySelector("li.pending")?.remove();
+      // A rejected post never echoes back, so drop its optimistic copy.
+      if (e.clientId) this.list.querySelector(`li.pending[data-client-id="${CSS.escape(e.clientId)}"]`)?.remove();
       this.showNotice(e.message ?? e.code);
     });
   }
