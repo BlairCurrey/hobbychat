@@ -34,7 +34,10 @@ export interface ChatClient {
   /** Your identity once joined. */
   readonly me: Identity | null;
   on<K extends keyof ChatEvents>(event: K, listener: (data: ChatEvents[K]) => void): () => void;
-  /** Send a message. Returns its clientId, which comes back on the echoed message. Queued while reconnecting. */
+  /**
+   * Send a message. Returns its clientId, which comes back on the echoed message, or on an
+   * `error` if it's rejected. Queued while reconnecting (up to 20; beyond that it errors).
+   */
   send(body: string): string;
   /** Disconnect for good. */
   close(): void;
@@ -127,8 +130,12 @@ export function connect(options: ConnectOptions): ChatClient {
       socket.send(JSON.stringify({ type: "hello", token: readToken() }));
       awaitingPong = false;
       heartbeatTimer = setInterval(() => {
-        // No pong since the last ping: the connection is dead even if the browser hasn't noticed.
-        if (awaitingPong) return socket.close();
+        // No pong since the last ping: the connection is dead even if the browser hasn't
+        // noticed. Reconnect now; a dead socket's close event can take a long time to fire.
+        if (awaitingPong) {
+          closed(socket);
+          return socket.close();
+        }
         awaitingPong = true;
         socket.send(PING);
       }, HEARTBEAT_MS);
@@ -144,16 +151,19 @@ export function connect(options: ConnectOptions): ChatClient {
       if (msg) handle(socket, msg);
     });
 
-    socket.addEventListener("close", () => {
-      if (ws !== socket) return;
-      ws = null;
-      stopHeartbeat();
-      if (stopped || status === "banned") return;
-      setStatus("closed");
-      const delay = Math.min(MAX_BACKOFF_MS, 1000 * 2 ** attempt) * (0.5 + Math.random() / 2);
-      attempt++;
-      reconnectTimer = setTimeout(open, delay);
-    });
+    socket.addEventListener("close", () => closed(socket));
+  }
+
+  /** Forget a socket and schedule a reconnect. Safe to call more than once. */
+  function closed(socket: WebSocket): void {
+    if (ws !== socket) return;
+    ws = null;
+    stopHeartbeat();
+    if (stopped || status === "banned") return;
+    setStatus("closed");
+    const delay = Math.min(MAX_BACKOFF_MS, 1000 * 2 ** attempt) * (0.5 + Math.random() / 2);
+    attempt++;
+    reconnectTimer = setTimeout(open, delay);
   }
 
   function handle(socket: WebSocket, msg: ServerMessage): void {
@@ -201,6 +211,12 @@ export function connect(options: ConnectOptions): ChatClient {
       const frame = JSON.stringify({ type: "post", body, clientId });
       if (ws && joined && ws.readyState === WS.OPEN) ws.send(frame);
       else if (queue.length < MAX_QUEUE) queue.push(frame);
+      else {
+        // Report it like any rejected post, after send() has returned the clientId.
+        queueMicrotask(() =>
+          emit("error", { type: "error", code: "rate_limited", message: "Too many messages waiting to send", clientId }),
+        );
+      }
       return clientId;
     },
     close() {

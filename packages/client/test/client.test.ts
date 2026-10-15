@@ -108,6 +108,29 @@ describe("connect", () => {
     expect(socket().readyState).toBe(3);
   });
 
+  it("reconnects right away when the heartbeat finds a dead connection", () => {
+    const { client, socket } = start();
+    socket().open();
+    socket().receive(welcome);
+    // A dead connection never fires "close", so don't wait for it.
+    socket().close = () => {};
+    vi.advanceTimersByTime(60_000);
+    expect(client.status).toBe("closed");
+    vi.advanceTimersByTime(1000);
+    expect(FakeSocket.instances).toHaveLength(2);
+  });
+
+  it("reports sends beyond the queue limit as errors instead of dropping them silently", async () => {
+    const { client } = start();
+    const errors: { code: string; clientId?: string }[] = [];
+    client.on("error", (e) => errors.push(e));
+    for (let i = 0; i < 20; i++) client.send(`queued ${i}`);
+    expect(errors).toEqual([]);
+    const overflow = client.send("one too many");
+    await Promise.resolve();
+    expect(errors).toEqual([expect.objectContaining({ code: "rate_limited", clientId: overflow })]);
+  });
+
   it("close() stops for good", () => {
     const { client, socket } = start();
     socket().open();

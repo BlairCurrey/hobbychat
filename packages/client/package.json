@@ -1,6 +1,6 @@
 {
   "name": "hobbychat",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Browser client for hobbychat: real-time chat rooms for your hobby apps, self-hosted on Cloudflare.",
   "license": "MIT",
   "repository": {

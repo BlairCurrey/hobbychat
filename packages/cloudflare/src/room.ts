@@ -48,9 +48,19 @@ export class ChatRoom extends DurableObject<Env> {
     }
   }
 
-  // With a compatibility date of 2026-04-07 or later the runtime replies to close
-  // frames itself, so there's nothing to do when a socket closes.
-  override async webSocketClose(): Promise<void> {}
+  /**
+   * Complete the closing handshake. Without this reply the browser waits ~10s and
+   * then reports an unclean close (1006), even though the runtime is documented to
+   * reply automatically; a second close() is harmless when it does.
+   */
+  override async webSocketClose(ws: WebSocket, code: number, reason: string): Promise<void> {
+    try {
+      // 1005/1006 mean "no code given" / "abnormal" and can't be sent back.
+      ws.close(code === 1005 || code === 1006 ? 1000 : code, reason);
+    } catch {
+      // Already closed.
+    }
+  }
 
   override async webSocketError(): Promise<void> {}
 

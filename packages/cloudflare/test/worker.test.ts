@@ -80,6 +80,16 @@ describe("worker", () => {
     b.ws.close();
   });
 
+  it("completes the closing handshake promptly and cleanly", async () => {
+    const conn = await join("closing");
+    const closed = new Promise<CloseEvent>((r) => conn.ws.addEventListener("close", r));
+    const start = Date.now();
+    conn.ws.close(1000, "bye");
+    const event = await closed;
+    expect(event.code).toBe(1000);
+    expect(Date.now() - start).toBeLessThan(1000);
+  });
+
   it("keeps a user's identity across reconnects", async () => {
     const first = await join("identity");
     first.ws.close();
