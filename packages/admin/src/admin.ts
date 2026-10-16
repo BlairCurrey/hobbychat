@@ -107,12 +107,20 @@ function messageRow(m: AdminMessage): HTMLTableRowElement {
     el(
       "td",
       { className: "actions" },
-      button("Delete", () =>
-        run(async () => {
+      button("Delete", async () => {
+        const preview = m.body.length > 80 ? `${m.body.slice(0, 80)}…` : m.body;
+        const sure = await confirmAction(
+          `Delete ${m.name}'s message?`,
+          `"${preview}" will be permanently deleted and disappear for everyone right away.`,
+          "Delete",
+        );
+        if (!sure) return;
+        void run(async () => {
           await api(`/messages/${encodeURIComponent(m.id)}`, { method: "DELETE" });
           row.remove();
           setStatus("Message deleted.");
-        }), "danger"),
+        });
+      }, "danger"),
       button("Ban", () => openBanDialog(m)),
     ),
   );
