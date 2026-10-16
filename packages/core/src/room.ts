@@ -39,11 +39,19 @@ export interface RoomHub {
   peers(): Peer[];
 }
 
+/** Shared limit on posts per IP, across all rooms and connections. */
+export interface IpLimiter {
+  /** Counts one post from this IP; false once the IP is over its limit. */
+  allow(ipHash: string): Promise<boolean>;
+}
+
 export interface RoomDeps {
   messages: MessageStore;
   bans: BanStore;
   registry: AppRegistry;
   hmac: Hmac;
+  /** Optional; without it only the per-connection `rateLimit` applies. */
+  ipLimiter?: IpLimiter;
   now?: () => number;
   newId?: (now: number) => string;
   random?: () => number;
@@ -146,6 +154,10 @@ export class RoomService {
     const bucket = takeToken(state.bucket, settings.rateLimit, now);
     peer.setState({ ...state, bucket: bucket.next });
     if (!bucket.allowed) return sendError(peer, "rate_limited", "Slow down", message.clientId);
+    // Opening more connections would otherwise multiply the per-connection allowance.
+    if (state.ipHash && this.deps.ipLimiter && !(await this.deps.ipLimiter.allow(state.ipHash))) {
+      return sendError(peer, "rate_limited", "Too many messages from your network", message.clientId);
+    }
 
     if (await this.deps.bans.find({ uid: user.uid, ipHash: state.ipHash }, now)) return ban(peer);
 

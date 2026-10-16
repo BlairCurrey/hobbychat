@@ -4,13 +4,14 @@ import {
   webCryptoHmac,
   type ChatConfig,
   type PeerState,
+  type RoomDeps,
 } from "../src/index.ts";
 import { MemoryBanStore, MemoryMessageStore, MemoryRoomHub } from "../src/memory/index.ts";
 
 export const SECRET = "test-secret-at-least-16-chars";
 
 /** Accepts any app ID unless the test's config says otherwise, so tests needn't list apps. */
-export function setup(config: ChatConfig = {}) {
+export function setup(config: ChatConfig = {}, extra: Partial<RoomDeps> = {}) {
   let time = 1_700_000_000_000;
   const clock = {
     now: () => time,
@@ -22,7 +23,7 @@ export function setup(config: ChatConfig = {}) {
   const bans = new MemoryBanStore();
   const registry = createAppRegistry({ allowUnlistedApps: true, ...config });
   const hmac = webCryptoHmac(SECRET);
-  const service = new RoomService({ messages, bans, registry, hmac, now: clock.now });
+  const service = new RoomService({ messages, bans, registry, hmac, now: clock.now, ...extra });
   const hubs = new Map<string, MemoryRoomHub>();
 
   const hub = (app = "app", room = "lobby") => {

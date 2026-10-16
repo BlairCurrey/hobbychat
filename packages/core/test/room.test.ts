@@ -118,6 +118,26 @@ describe("post", () => {
     await a.post("ok again");
     expect(t.messages.rows).toHaveLength(4);
   });
+
+  it("also limits per IP across connections and rooms", async () => {
+    const counts = new Map<string, number>();
+    const ipLimiter = {
+      allow: async (ip: string) => {
+        counts.set(ip, (counts.get(ip) ?? 0) + 1);
+        return counts.get(ip)! <= 2;
+      },
+    };
+    const t = setup({}, { ipLimiter });
+    const a = await t.join({ ipHash: "ip-a" });
+    const b = await t.join({ ipHash: "ip-a", room: "other" });
+    const c = await t.join({ ipHash: "ip-b" });
+    await a.post("1");
+    await b.post("2");
+    await b.post("3");
+    expect(b.peer.last("error")).toMatchObject({ code: "rate_limited", clientId: "c1" });
+    await c.post("4");
+    expect(t.messages.rows.map((r) => r.body)).toEqual(["1", "2", "4"]);
+  });
 });
 
 describe("room policy and limits", () => {

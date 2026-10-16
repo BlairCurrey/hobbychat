@@ -29,6 +29,12 @@
     }
   ],
 
+  // Posts per IP per minute, across all rooms and connections, on top of each app's
+  // per-connection rateLimit. Leaves room for a few people sharing one IP (a home,
+  // a school) while keeping one machine well under the free plan's daily D1 writes.
+  // namespace_id just has to be unique among rate limiters in your Cloudflare account.
+  "ratelimits": [{ "name": "IP_LIMITER", "namespace_id": "41707", "simple": { "limit": 20, "period": 60 } }],
+
   // Daily cleanup: message retention, per-room caps, expired bans.
   "triggers": { "crons": ["17 3 * * *"] },
 

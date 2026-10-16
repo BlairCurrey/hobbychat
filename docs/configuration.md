@@ -62,6 +62,8 @@ Set `allowUnlistedApps: true` to let any app name use the `defaults`, so new app
 
 Bad config fails loudly at startup with a message pointing at the setting.
 
+On top of each app's `rateLimit`, one IP can post at most 20 messages a minute across all apps and rooms, so opening more connections doesn't buy more. Change it under `ratelimits` in `wrangler.jsonc`. Cloudflare counts per data center, so it's approximate.
+
 ## Variables and secrets
 
 | Name                 | Kind     | Purpose |

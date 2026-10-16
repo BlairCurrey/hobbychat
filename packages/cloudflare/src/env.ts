@@ -6,6 +6,7 @@ import {
   type AppRegistry,
   type BanStore,
   type Hmac,
+  type IpLimiter,
   type MessageStore,
 } from "@hobbychat/core";
 import config from "../../../chat.config.ts";
@@ -16,6 +17,8 @@ export interface Env {
   DB: D1Database;
   ROOMS: DurableObjectNamespace<ChatRoom>;
   ASSETS: Fetcher;
+  /** Rate limiting binding: posts per IP across all rooms. Optional. */
+  IP_LIMITER?: RateLimit;
   /** Secret: signs user tokens and hashes IPs. */
   HMAC_SECRET: string;
   /** Comma-separated origins added to `defaults.origins`. */
@@ -31,6 +34,7 @@ export interface Deps {
   hmac: Hmac;
   messages: MessageStore;
   bans: BanStore;
+  ipLimiter?: IpLimiter;
 }
 
 const cache = new WeakMap<Env, Deps>();
@@ -51,6 +55,9 @@ export function deps(env: Env): Deps {
       hmac: webCryptoHmac(env.HMAC_SECRET),
       messages: new D1MessageStore(env.DB),
       bans: new D1BanStore(env.DB),
+      ipLimiter: env.IP_LIMITER && {
+        allow: async (ipHash) => (await env.IP_LIMITER!.limit({ key: ipHash })).success,
+      },
     };
     cache.set(env, d);
   }
