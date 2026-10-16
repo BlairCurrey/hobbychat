@@ -38,11 +38,20 @@ export type ClientMessage = HelloMessage | PostMessage;
 
 // ---- server → client ----
 
+/** The room's limits, so clients can size their input and offline queue. */
+export interface Limits {
+  maxMessageLength: number;
+  /** A fresh connection can send `count` messages at once, refilling over `windowMs`. */
+  rateLimit: { count: number; windowMs: number };
+}
+
 export interface WelcomeMessage {
   type: "welcome";
   you: Identity;
   token: string;
   history: Message[];
+  /** Missing from servers older than 0.2. */
+  limits?: Limits;
 }
 
 export interface NewMessage {
@@ -55,7 +64,11 @@ export interface DeletedMessage {
   id: string;
 }
 
-export type ErrorCode = "rate_limited" | "too_long" | "room_limit" | "invalid";
+/**
+ * `queue_full` never comes from the server: the client reports it when a send can't be
+ * queued while disconnected.
+ */
+export type ErrorCode = "rate_limited" | "too_long" | "room_limit" | "invalid" | "queue_full";
 
 export interface ErrorMessage {
   type: "error";
@@ -139,7 +152,19 @@ function isMessage(v: unknown): v is Message {
   );
 }
 
-const ERROR_CODES: readonly string[] = ["rate_limited", "too_long", "room_limit", "invalid"];
+const ERROR_CODES: readonly string[] = ["rate_limited", "too_long", "room_limit", "invalid", "queue_full"];
+
+function isLimits(v: unknown): v is Limits {
+  if (typeof v !== "object" || v === null) return false;
+  const l = v as Json;
+  const rate = l.rateLimit as Json | undefined;
+  return (
+    typeof l.maxMessageLength === "number" &&
+    typeof rate === "object" && rate !== null &&
+    typeof rate.count === "number" &&
+    typeof rate.windowMs === "number"
+  );
+}
 
 /** Parse a frame from the server. Returns null for anything unexpected (e.g. "pong"). */
 export function parseServerMessage(raw: string): ServerMessage | null {
@@ -151,6 +176,7 @@ export function parseServerMessage(raw: string): ServerMessage | null {
       if (!you || !isString(you.uid) || !isString(you.name)) return null;
       if (!isString(obj.token) || !Array.isArray(obj.history)) return null;
       if (!obj.history.every(isMessage)) return null;
+      if (obj.limits !== undefined && !isLimits(obj.limits)) return null;
       return obj as unknown as WelcomeMessage;
     }
     case "message":

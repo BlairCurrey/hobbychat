@@ -124,7 +124,8 @@ export class RoomService {
       ? await this.deps.messages.listRecent(state.app, state.room, settings.historyOnJoin)
       : [];
     peer.setState({ ...state, user });
-    peer.send({ type: "welcome", you: user, token, history });
+    const limits = { maxMessageLength: settings.maxMessageLength, rateLimit: settings.rateLimit };
+    peer.send({ type: "welcome", you: user, token, history, limits });
   }
 
   private async post(hub: RoomHub, peer: Peer, message: PostMessage): Promise<void> {

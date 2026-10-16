@@ -3,6 +3,7 @@ import {
   PING,
   type ErrorMessage,
   type Identity,
+  type Limits,
   type Message,
   type ServerMessage,
 } from "@hobbychat/protocol";
@@ -11,7 +12,7 @@ export type ChatStatus = "connecting" | "open" | "closed" | "banned";
 
 export interface ChatEvents {
   /** Joined (or rejoined after a reconnect). `history` replaces anything shown before. */
-  welcome: { you: Identity; history: Message[] };
+  welcome: { you: Identity; history: Message[]; limits: Limits | null };
   message: Message;
   deleted: string;
   error: ErrorMessage;
@@ -33,10 +34,13 @@ export interface ChatClient {
   readonly status: ChatStatus;
   /** Your identity once joined. */
   readonly me: Identity | null;
+  /** The room's message length and rate limits once joined (null before, or with servers older than 0.2). */
+  readonly limits: Limits | null;
   on<K extends keyof ChatEvents>(event: K, listener: (data: ChatEvents[K]) => void): () => void;
   /**
    * Send a message. Returns its clientId, which comes back on the echoed message, or on an
-   * `error` if it's rejected. Queued while reconnecting (up to 20; beyond that it errors).
+   * `error` if it's rejected. While disconnected, sends are queued up to the room's rate limit
+   * (5 before the first join); beyond that they fail with `queue_full`.
    */
   send(body: string): string;
   /** Disconnect for good. */
@@ -45,6 +49,8 @@ export interface ChatClient {
 
 const HEARTBEAT_MS = 30_000;
 const MAX_BACKOFF_MS = 30_000;
+/** Offline queue size before the server has told us its rate limit. */
+const DEFAULT_QUEUE = 5;
 const MAX_QUEUE = 20;
 
 function defaultStorage(): ConnectOptions["storage"] {
@@ -81,6 +87,7 @@ export function connect(options: ConnectOptions): ChatClient {
   let ws: WebSocket | null = null;
   let status: ChatStatus = "connecting";
   let me: Identity | null = null;
+  let limits: Limits | null = null;
   let stopped = false;
   let attempt = 0;
   let joined = false;
@@ -169,12 +176,13 @@ export function connect(options: ConnectOptions): ChatClient {
   function handle(socket: WebSocket, msg: ServerMessage): void {
     switch (msg.type) {
       case "welcome":
+        limits = msg.limits ?? null;
         attempt = 0;
         joined = true;
         me = msg.you;
         writeToken(msg.token);
         setStatus("open");
-        emit("welcome", { you: msg.you, history: msg.history });
+        emit("welcome", { you: msg.you, history: msg.history, limits });
         while (queue.length) socket.send(queue.shift()!);
         break;
       case "message":
@@ -201,6 +209,9 @@ export function connect(options: ConnectOptions): ChatClient {
     get me() {
       return me;
     },
+    get limits() {
+      return limits;
+    },
     on(event, listener) {
       if (!listeners.has(event)) listeners.set(event, new Set());
       listeners.get(event)!.add(listener as (data: never) => void);
@@ -210,11 +221,12 @@ export function connect(options: ConnectOptions): ChatClient {
       const clientId = newClientId();
       const frame = JSON.stringify({ type: "post", body, clientId });
       if (ws && joined && ws.readyState === WS.OPEN) ws.send(frame);
-      else if (queue.length < MAX_QUEUE) queue.push(frame);
+      // A new connection can send a full rate-limit's worth at once, so queue no more than that.
+      else if (queue.length < Math.min(MAX_QUEUE, limits?.rateLimit.count ?? DEFAULT_QUEUE)) queue.push(frame);
       else {
         // Report it like any rejected post, after send() has returned the clientId.
         queueMicrotask(() =>
-          emit("error", { type: "error", code: "rate_limited", message: "Too many messages waiting to send", clientId }),
+          emit("error", { type: "error", code: "queue_full", message: "Not connected, and too many messages are waiting to send", clientId }),
         );
       }
       return clientId;

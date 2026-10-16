@@ -54,8 +54,9 @@ const chat = HobbyChat.connect({ // or `connect` imported from "hobbychat"
   room: "lobby",
 });
 
-chat.on("welcome", ({ you, history }) => {
+chat.on("welcome", ({ you, history, limits }) => {
   // Fires on every (re)connect. Replace whatever you show with `history`.
+  // limits: { maxMessageLength, rateLimit: { count, windowMs } } for this room
 });
 chat.on("message", (m) => {
   // { id, room, uid, name, body, createdAt, clientId? }
@@ -63,18 +64,20 @@ chat.on("message", (m) => {
 chat.on("deleted", (id) => { /* remove message `id` */ });
 chat.on("error", (e) => {
   // e.code: rate_limited | too_long | room_limit | invalid
+  //         queue_full: sent while disconnected and the offline queue is full
   // e.clientId: set when a post was rejected; matches the value send() returned
 });
 chat.on("status", (s) => { /* connecting | open | closed | banned */ });
 
 const clientId = chat.send("hello!"); // the echoed message carries the same clientId
 chat.me;      // { uid, name } once joined
+chat.limits;  // the room's limits once joined
 chat.close();
 ```
 
 Message bodies are plain text from strangers. **Always render them as text** (`textContent`), never as HTML.
 
-The client reconnects with backoff and sends a heartbeat every 30 seconds. It also stores a signed token in `localStorage`, so people keep their name across visits. Messages sent while reconnecting are queued.
+The client reconnects with backoff and sends a heartbeat every 30 seconds. It also stores a signed token in `localStorage`, so people keep their name across visits. Messages sent while reconnecting are queued, up to as many as the room's rate limit allows at once (so they all go through on reconnect); beyond that, `send()` fails with `queue_full`.
 
 Use the npm package from the same release as your server. Until 1.0, a minor version bump may need a server update too.
 

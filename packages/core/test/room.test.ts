@@ -9,6 +9,7 @@ describe("hello", () => {
     expect(a.welcome.you.name).toMatch(/^[a-z]+-[a-z]+$/);
     expect(a.welcome.token).toContain(".");
     expect(a.welcome.history).toEqual([]);
+    expect(a.welcome.limits).toEqual({ maxMessageLength: 500, rateLimit: { count: 10, windowMs: 60_000 } });
 
     await a.post("hi");
     const b = await t.join();

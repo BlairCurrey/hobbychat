@@ -13,10 +13,10 @@ import { connect } from "hobbychat";
 
 const chat = connect({ url: "https://hobbychat.you.workers.dev", app: "my-game", room: "lobby" });
 
-chat.on("welcome", ({ you, history }) => {}); // on every (re)connect; replace what you show with `history`
+chat.on("welcome", ({ you, history, limits }) => {}); // on every (re)connect; replace what you show with `history`
 chat.on("message", (m) => {});                // { id, room, uid, name, body, createdAt, clientId? }
 chat.on("deleted", (id) => {});               // a moderator removed a message
-chat.on("error", (e) => {});                  // e.code, and e.clientId if a post was rejected
+chat.on("error", (e) => {});                  // e.code (rate_limited, too_long, room_limit, invalid, queue_full), e.clientId
 chat.on("status", (s) => {});                 // connecting | open | closed | banned
 
 chat.send("hello!"); // returns a clientId, echoed back on the message (or the error)

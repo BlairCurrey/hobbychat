@@ -168,7 +168,8 @@ export class HobbyChatElement extends HTMLElement {
     this.client = client;
     this.renderStatus(client.status);
     client.on("status", (s) => this.renderStatus(s));
-    client.on("welcome", ({ you, history }) => {
+    client.on("welcome", ({ you, history, limits }) => {
+      if (limits) this.input.maxLength = limits.maxMessageLength;
       this.root.querySelector(".me")!.textContent = `you are ${you.name}`;
       const pending = [...this.list.querySelectorAll("li.pending")];
       this.list.replaceChildren(...history.map((m) => this.renderMessage(m)), ...pending);

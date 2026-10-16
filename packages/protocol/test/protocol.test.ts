@@ -47,6 +47,11 @@ describe("parseServerMessage", () => {
     expect(
       parseServerMessage(JSON.stringify({ type: "welcome", you: { uid: "u", name: "n" }, token: "t", history: [message] })),
     )?.toBeTruthy();
+    const limits = { maxMessageLength: 500, rateLimit: { count: 10, windowMs: 60000 } };
+    const welcome = { type: "welcome", you: { uid: "u", name: "n" }, token: "t", history: [] };
+    expect(parseServerMessage(JSON.stringify({ ...welcome, limits }))).toMatchObject({ limits });
+    expect(parseServerMessage(JSON.stringify({ ...welcome, limits: { maxMessageLength: "500" } }))).toBeNull();
+    expect(parseServerMessage('{"type":"error","code":"queue_full"}')?.type).toBe("error");
     expect(parseServerMessage('{"type":"deleted","id":"1"}')).toEqual({ type: "deleted", id: "1" });
     expect(parseServerMessage('{"type":"error","code":"rate_limited"}')?.type).toBe("error");
     expect(parseServerMessage('{"type":"error","code":"too_long","clientId":"c1"}')).toEqual({

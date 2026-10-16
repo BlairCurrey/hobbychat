@@ -120,15 +120,35 @@ describe("connect", () => {
     expect(FakeSocket.instances).toHaveLength(2);
   });
 
-  it("reports sends beyond the queue limit as errors instead of dropping them silently", async () => {
+  it("reports sends beyond the offline queue as queue_full instead of dropping them", async () => {
     const { client } = start();
     const errors: { code: string; clientId?: string }[] = [];
     client.on("error", (e) => errors.push(e));
-    for (let i = 0; i < 20; i++) client.send(`queued ${i}`);
+    for (let i = 0; i < 5; i++) client.send(`queued ${i}`); // default before the server says otherwise
     expect(errors).toEqual([]);
     const overflow = client.send("one too many");
     await Promise.resolve();
-    expect(errors).toEqual([expect.objectContaining({ code: "rate_limited", clientId: overflow })]);
+    expect(errors).toEqual([expect.objectContaining({ code: "queue_full", clientId: overflow })]);
+  });
+
+  it("sizes the offline queue to the room's rate limit so a reconnect can send all of it", async () => {
+    const { client, socket } = start();
+    socket().open();
+    socket().receive({ ...welcome, limits: { maxMessageLength: 500, rateLimit: { count: 3, windowMs: 60_000 } } });
+    expect(client.limits?.rateLimit.count).toBe(3);
+    socket().close();
+
+    const errors: string[] = [];
+    client.on("error", (e) => errors.push(e.code));
+    for (let i = 0; i < 4; i++) client.send(`offline ${i}`);
+    await Promise.resolve();
+    expect(errors).toEqual(["queue_full"]);
+
+    vi.advanceTimersByTime(1000);
+    socket().open();
+    socket().receive(welcome);
+    const posts = socket().sent.filter((f) => f.includes('"post"'));
+    expect(posts).toHaveLength(3);
   });
 
   it("close() stops for good", () => {
