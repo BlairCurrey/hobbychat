@@ -122,6 +122,22 @@ describe("app registry", () => {
     expect(registry.resolve("pets", "https://x.me.dev").ok).toBe(false);
   });
 
+  it("allows no origins out of the box", () => {
+    const bare = createAppRegistry({});
+    expect(bare.resolve("anything", "http://localhost:5173")).toEqual({ ok: false, reason: "origin_not_allowed" });
+    expect(bare.resolve("anything", "https://example.com")).toEqual({ ok: false, reason: "origin_not_allowed" });
+  });
+
+  it("can accept only listed apps, which local dev can override", () => {
+    const config = { allowUnlistedApps: false, defaults: { origins: ["https://me.dev"] }, apps: { listed: {} } };
+    const strict = createAppRegistry(config);
+    expect(strict.resolve("listed", "https://me.dev").ok).toBe(true);
+    expect(strict.resolve("made-up", "https://me.dev")).toEqual({ ok: false, reason: "unknown_app" });
+    expect(strict.resolve("Bad App", "https://me.dev")).toEqual({ ok: false, reason: "invalid_app" });
+    expect(strict.settings("made-up")).toBeNull();
+    expect(createAppRegistry(config, { allowUnlistedApps: true }).resolve("made-up", "https://me.dev").ok).toBe(true);
+  });
+
   it("validates config eagerly with helpful errors", () => {
     expect(() => createAppRegistry({ apps: { x: { retention: "1 year" } } })).toThrow(/apps\.x.*Invalid duration/);
     expect(() => createAppRegistry({ apps: { "Bad App": {} } })).toThrow(/app ID/);

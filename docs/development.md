@@ -44,7 +44,7 @@ pnpm test         # all packages; the Cloudflare tests run in the real Workers r
 pnpm typecheck
 ```
 
-`pnpm dev` creates `.dev.vars` with a random secret and `DEV_MODE=true` on first run, and applies database migrations locally. To run the daily cleanup by hand: `curl "http://localhost:8787/cdn-cgi/local/scheduled"`.
+`pnpm dev` creates `.dev.vars` with a random secret and `DEV_MODE=true` on first run, and applies database migrations locally. Dev mode allows `localhost` pages and any app ID, serves the demo page, and opens the admin page without a login; none of that applies to a deployed server. To run the daily cleanup by hand: `curl "http://localhost:8787/cdn-cgi/local/scheduled"`.
 
 Schema changes go in a new file under `packages/cloudflare/migrations/`. `pnpm run deploy` applies them before deploying.
 

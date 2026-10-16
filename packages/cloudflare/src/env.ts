@@ -1,5 +1,6 @@
 import {
   createAppRegistry,
+  LOCAL_ORIGINS,
   parseOriginList,
   webCryptoHmac,
   type AppRegistry,
@@ -21,7 +22,7 @@ export interface Env {
   ALLOWED_ORIGINS?: string;
   ACCESS_TEAM_DOMAIN?: string;
   ACCESS_AUD?: string;
-  /** "true" in .dev.vars only: serves /demo and lets localhost into /admin without Access. */
+  /** "true" in .dev.vars only: serves /demo, accepts localhost pages and any app ID, and lets localhost into /admin without Access. */
   DEV_MODE?: string;
 }
 
@@ -42,7 +43,11 @@ export function deps(env: Env): Deps {
       throw new Error("HMAC_SECRET is not set. Run `wrangler secret put HMAC_SECRET` (or add it to .dev.vars).");
     }
     d = {
-      registry: createAppRegistry(config, { extraOrigins: parseOriginList(env.ALLOWED_ORIGINS) }),
+      // Local dev (DEV_MODE, set only in .dev.vars) accepts localhost and any app ID.
+      registry: createAppRegistry(config, {
+        extraOrigins: [...parseOriginList(env.ALLOWED_ORIGINS), ...(isDev(env) ? LOCAL_ORIGINS : [])],
+        allowUnlistedApps: isDev(env) ? true : undefined,
+      }),
       hmac: webCryptoHmac(env.HMAC_SECRET),
       messages: new D1MessageStore(env.DB),
       bans: new D1BanStore(env.DB),

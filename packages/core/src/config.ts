@@ -23,6 +23,11 @@ export interface AppSettings {
 }
 
 export interface ChatConfig {
+  /**
+   * Accept app IDs that have no entry under `apps` (using `defaults`). Default true, so a
+   * new app needs no registration. Set false to accept only the apps you list.
+   */
+  allowUnlistedApps?: boolean;
   defaults?: Partial<AppSettings>;
   apps?: Record<string, Partial<AppSettings>>;
 }
@@ -33,7 +38,8 @@ export function defineConfig(config: ChatConfig): ChatConfig {
 }
 
 export const BUILTIN_DEFAULTS: AppSettings = {
-  origins: ["http://localhost:*", "http://127.0.0.1:*"],
+  // Nothing by default: list your sites here or in ALLOWED_ORIGINS. Local dev adds localhost.
+  origins: [],
   rooms: "open",
   maxActiveRooms: 50,
   retention: "30d",
@@ -124,11 +130,11 @@ function resolveSettings(label: string, s: AppSettings): ResolvedSettings {
 
 export type ResolveResult =
   | { ok: true; settings: ResolvedSettings }
-  | { ok: false; reason: "invalid_app" | "origin_not_allowed" };
+  | { ok: false; reason: "invalid_app" | "unknown_app" | "origin_not_allowed" };
 
 /** Turns an app ID (and the connecting page's origin) into effective settings. */
 export interface AppRegistry {
-  /** Settings for an app ID regardless of origin, or null if the ID is malformed. */
+  /** Settings for an app ID regardless of origin, or null if the ID is malformed or not accepted. */
   settings(appId: string): ResolvedSettings | null;
   /** Settings for a connecting browser; rejects disallowed origins. */
   resolve(appId: string, origin: string | null): ResolveResult;
@@ -141,7 +147,12 @@ export interface AppRegistry {
 export interface RegistryOptions {
   /** Extra origins added to `defaults.origins`, e.g. from an `ALLOWED_ORIGINS` env var. */
   extraOrigins?: string[];
+  /** Overrides `allowUnlistedApps` from config (e.g. always allow in local development). */
+  allowUnlistedApps?: boolean;
 }
+
+/** Origins that local development (`pnpm dev`) accepts on top of the config. */
+export const LOCAL_ORIGINS = ["http://localhost:*", "http://127.0.0.1:*"];
 
 /** Build an {@link AppRegistry} from config. Validates everything eagerly and throws on bad config. */
 export function createAppRegistry(config: ChatConfig, options: RegistryOptions = {}): AppRegistry {
@@ -157,16 +168,18 @@ export function createAppRegistry(config: ChatConfig, options: RegistryOptions =
     apps.set(appId, resolveSettings(`apps.${appId}`, { ...defaultsRaw, ...overrides }));
   }
 
+  const allowUnlisted = options.allowUnlistedApps ?? config.allowUnlistedApps ?? true;
+
   const settings = (appId: string): ResolvedSettings | null => {
     if (!isValidSlug(appId)) return null;
-    return apps.get(appId) ?? defaults;
+    return apps.get(appId) ?? (allowUnlisted ? defaults : null);
   };
 
   return {
     settings,
     resolve(appId, origin) {
       const s = settings(appId);
-      if (!s) return { ok: false, reason: "invalid_app" };
+      if (!s) return { ok: false, reason: isValidSlug(appId) ? "unknown_app" : "invalid_app" };
       if (!origin || !s.origins.matches(origin)) return { ok: false, reason: "origin_not_allowed" };
       return { ok: true, settings: s };
     },

@@ -104,15 +104,17 @@ describe("admin api", () => {
 describe("authorizeConnect", () => {
   const origin = "http://localhost:3000";
 
+  const local = { origins: ["http://localhost:*"] };
+
   it("accepts a valid request and hashes the IP", async () => {
-    const t = setup();
+    const t = setup({ defaults: local });
     const r = await authorizeConnect(t, { app: "app", room: "lobby", origin, ip: "1.2.3.4" });
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.ipHash).toBe(await hashIp(t.hmac, "1.2.3.4"));
   });
 
   it("rejects bad origin, room policy, and banned IPs", async () => {
-    const t = setup({ apps: { fixed: { rooms: ["lobby"] } } });
+    const t = setup({ defaults: local, apps: { fixed: { rooms: ["lobby"] } } });
     const bad = (req: object) => authorizeConnect(t, { app: "app", room: "lobby", origin, ip: "1.1.1.1", ...req });
     expect(await bad({ origin: "https://evil.com" })).toMatchObject({ ok: false, status: 403 });
     expect(await bad({ origin: null })).toMatchObject({ ok: false, status: 403 });
@@ -121,6 +123,15 @@ describe("authorizeConnect", () => {
 
     await t.bans.add({ kind: "ip", value: await hashIp(t.hmac, "6.6.6.6"), reason: null, createdAt: 0, expiresAt: null });
     expect(await bad({ ip: "6.6.6.6" })).toMatchObject({ ok: false, reason: "Banned" });
+  });
+});
+
+describe("authorizeConnect with only listed apps", () => {
+  it("rejects app IDs that aren't in the config", async () => {
+    const t = setup({ allowUnlistedApps: false, defaults: { origins: ["https://mysite.dev"] }, apps: { mine: {} } });
+    const req = { room: "lobby", origin: "https://mysite.dev", ip: null };
+    expect(await authorizeConnect(t, { ...req, app: "mine" })).toMatchObject({ ok: true });
+    expect(await authorizeConnect(t, { ...req, app: "made-up" })).toEqual({ ok: false, status: 403, reason: "Unknown app" });
   });
 });
 

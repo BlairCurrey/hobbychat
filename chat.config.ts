@@ -4,9 +4,12 @@ import { defineConfig } from "@hobbychat/core";
 // Any app ID works from an allowed origin with these defaults; add an entry
 // under `apps` only to override something. See docs/configuration.md.
 export default defineConfig({
+  // Set to false to accept only the apps listed under `apps`.
+  allowUnlistedApps: true,
   defaults: {
-    // Also add origins without editing this file via the ALLOWED_ORIGINS variable.
-    origins: ["http://localhost:*", "http://127.0.0.1:*"],
+    // Sites allowed to connect, e.g. "https://mygame.com". Usually easier to set via the
+    // ALLOWED_ORIGINS variable instead. `pnpm dev` always allows localhost.
+    origins: [],
     rooms: "open",
     maxActiveRooms: 50,
     retention: "30d",

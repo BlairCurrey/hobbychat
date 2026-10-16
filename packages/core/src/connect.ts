@@ -25,9 +25,9 @@ export async function authorizeConnect(
   if (!req.app || !req.room) return { ok: false, status: 400, reason: "app and room are required" };
   const resolved = deps.registry.resolve(req.app, req.origin);
   if (!resolved.ok) {
-    return resolved.reason === "invalid_app"
-      ? { ok: false, status: 400, reason: "Invalid app ID" }
-      : { ok: false, status: 403, reason: "Origin not allowed" };
+    if (resolved.reason === "invalid_app") return { ok: false, status: 400, reason: "Invalid app ID" };
+    if (resolved.reason === "unknown_app") return { ok: false, status: 403, reason: "Unknown app" };
+    return { ok: false, status: 403, reason: "Origin not allowed" };
   }
   if (!isRoomAllowed(resolved.settings.rooms, req.room)) {
     return { ok: false, status: 403, reason: "Room not allowed" };
