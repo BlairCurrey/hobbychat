@@ -9,6 +9,7 @@ import { MemoryBanStore, MemoryMessageStore, MemoryRoomHub } from "../src/memory
 
 export const SECRET = "test-secret-at-least-16-chars";
 
+/** Accepts any app ID unless the test's config says otherwise, so tests needn't list apps. */
 export function setup(config: ChatConfig = {}) {
   let time = 1_700_000_000_000;
   const clock = {
@@ -19,7 +20,7 @@ export function setup(config: ChatConfig = {}) {
   };
   const messages = new MemoryMessageStore();
   const bans = new MemoryBanStore();
-  const registry = createAppRegistry(config);
+  const registry = createAppRegistry({ allowUnlistedApps: true, ...config });
   const hmac = webCryptoHmac(SECRET);
   const service = new RoomService({ messages, bans, registry, hmac, now: clock.now });
   const hubs = new Map<string, MemoryRoomHub>();

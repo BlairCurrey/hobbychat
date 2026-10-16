@@ -25,7 +25,7 @@ Origin checks stop other websites from embedding your chat. They don't stop a de
 
 ## Apps and settings
 
-An **app** is just a name your page passes (`<hobby-chat app="my-game">`). App and room names use lowercase letters, digits, `-` and `_`, up to 64 characters. Any app name from an allowed origin works with the `defaults`. Add an entry under `apps` only when one app needs something different:
+An **app** is just a name your page passes (`<hobby-chat app="my-game">`). App and room names use lowercase letters, digits, `-` and `_`, up to 64 characters. List each app under `apps`. An empty entry uses the `defaults`; override settings only where one app needs something different:
 
 ```ts
 export default defineConfig({
@@ -34,6 +34,7 @@ export default defineConfig({
     retention: "30d",
   },
   apps: {
+    "my-game": {},
     "mlb-scores": { rooms: /^game-\d+$/, retention: "3d" },
     "guestbook": { rooms: ["lobby"], retention: "forever", maxMessagesPerRoom: 1000 },
   },
@@ -42,20 +43,11 @@ export default defineConfig({
 
 An app's own `origins`, if set, replace the defaults for that app. `ALLOWED_ORIGINS` only adds to the defaults.
 
-### Accepting only your apps
+Local development (`pnpm dev`) accepts any app name, so you can try things before listing them.
 
-By default any app name works, which keeps setup at zero. The catch: anyone can then invent new app names on your server. Each invented name gets its own allowance of rooms, so a single person could fill your database or use up your free tier, just by making up names.
+### Accepting any app name
 
-If the server is only for your own apps, turn that off, and only the apps listed under `apps` work:
-
-```ts
-export default defineConfig({
-  allowUnlistedApps: false,
-  apps: { "my-game": {}, "guestbook": { rooms: ["lobby"] } },
-});
-```
-
-Local development (`pnpm dev`) still accepts any app name.
+Set `allowUnlistedApps: true` to let any app name use the `defaults`, so new apps need no entry. The catch: anyone can then invent app names on your server. Each invented name gets its own allowance of rooms, so a single person could fill your database or use up your free tier just by making up names.
 
 | Setting              | Default                   | What it does |
 | -------------------- | ------------------------- | ------------ |

@@ -21,7 +21,7 @@ import "hobbychat/widget";           // registers <hobby-chat>; set its `server`
 
 | Attribute     | Default                           | |
 | ------------- | --------------------------------- | - |
-| `app`         | (required)                        | Your app's name. Any name works; see [configuration](configuration.md). |
+| `app`         | (required)                        | Your app's name, as listed in `chat.config.ts`; see [configuration](configuration.md). |
 | `room`        | `lobby`                           | Changing it switches rooms live. |
 | `server`      | where `client.js` was loaded from | Set it if you bundle the client yourself. |
 | `placeholder` | `Say something…`                  | Input placeholder. |

@@ -89,6 +89,7 @@ describe("parsing", () => {
 describe("app registry", () => {
   const registry = createAppRegistry(
     {
+      allowUnlistedApps: true,
       defaults: { origins: ["https://*.me.dev"], retention: "7d" },
       apps: {
         scores: { rooms: /^game-\d+$/, retention: "3d" },
@@ -98,7 +99,7 @@ describe("app registry", () => {
     { extraOrigins: ["https://extra.dev"] },
   );
 
-  it("accepts unregistered apps from default origins with zero registration", () => {
+  it("can accept unlisted apps from default origins", () => {
     const r = registry.resolve("anything", "https://x.me.dev");
     expect(r.ok && r.settings.retentionMs).toBe(7 * 86_400_000);
     expect(registry.resolve("anything", "https://extra.dev").ok).toBe(true);
@@ -123,13 +124,13 @@ describe("app registry", () => {
   });
 
   it("allows no origins out of the box", () => {
-    const bare = createAppRegistry({});
+    const bare = createAppRegistry({ apps: { anything: {} } });
     expect(bare.resolve("anything", "http://localhost:5173")).toEqual({ ok: false, reason: "origin_not_allowed" });
     expect(bare.resolve("anything", "https://example.com")).toEqual({ ok: false, reason: "origin_not_allowed" });
   });
 
-  it("can accept only listed apps, which local dev can override", () => {
-    const config = { allowUnlistedApps: false, defaults: { origins: ["https://me.dev"] }, apps: { listed: {} } };
+  it("accepts only listed apps by default, which local dev can override", () => {
+    const config = { defaults: { origins: ["https://me.dev"] }, apps: { listed: {} } };
     const strict = createAppRegistry(config);
     expect(strict.resolve("listed", "https://me.dev").ok).toBe(true);
     expect(strict.resolve("made-up", "https://me.dev")).toEqual({ ok: false, reason: "unknown_app" });

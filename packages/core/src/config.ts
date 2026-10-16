@@ -24,8 +24,8 @@ export interface AppSettings {
 
 export interface ChatConfig {
   /**
-   * Accept app IDs that have no entry under `apps` (using `defaults`). Default true, so a
-   * new app needs no registration. Set false to accept only the apps you list.
+   * Accept app IDs that have no entry under `apps` (using `defaults`). Default false: only
+   * the apps you list work, so strangers can't invent app IDs to get more rooms.
    */
   allowUnlistedApps?: boolean;
   defaults?: Partial<AppSettings>;
@@ -168,7 +168,7 @@ export function createAppRegistry(config: ChatConfig, options: RegistryOptions =
     apps.set(appId, resolveSettings(`apps.${appId}`, { ...defaultsRaw, ...overrides }));
   }
 
-  const allowUnlisted = options.allowUnlistedApps ?? config.allowUnlistedApps ?? true;
+  const allowUnlisted = options.allowUnlistedApps ?? config.allowUnlistedApps ?? false;
 
   const settings = (appId: string): ResolvedSettings | null => {
     if (!isValidSlug(appId)) return null;

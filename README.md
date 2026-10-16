@@ -14,7 +14,7 @@ At hobby scale it fits in Cloudflare's free plan.
 ## Get started
 
 1. **Deploy.** Click the button above. It copies this repo to your GitHub and deploys it. When asked for `HMAC_SECRET`, paste the output of `openssl rand -hex 32`.
-2. **Allow your site.** In the Cloudflare dashboard, open your `hobbychat` Worker → Settings → Variables and Secrets, and add a text variable `ALLOWED_ORIGINS` set to your site, e.g. `https://mygame.com`.
+2. **Add your site and app.** In the repo the button created, edit `chat.config.ts`: add your site to `origins` (e.g. `"https://mygame.com"`) and your app's name under `apps` (e.g. `"my-game": {}`). Committing redeploys the server.
 3. **Add chat to your page.**
 
    ```html
@@ -22,7 +22,7 @@ At hobby scale it fits in Cloudflare's free plan.
    <hobby-chat app="my-game" room="lobby"></hobby-chat>
    ```
 
-   Any app name works. There's nothing to register. Use different `room` values for separate conversations.
+   Use different `room` values for separate conversations.
 
 4. **Turn on moderation.** Put `/admin` behind Cloudflare Access (free) by following [docs/admin.md](docs/admin.md).
 
