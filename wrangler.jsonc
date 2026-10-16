@@ -3,6 +3,10 @@
   "name": "hobbychat",
   "main": "packages/cloudflare/src/worker.ts",
   "compatibility_date": "2026-10-01",
+  // Serve on <name>.<subdomain>.workers.dev, but not on per-version preview URLs:
+  // those would be extra public entry points sharing the same database.
+  "workers_dev": true,
+  "preview_urls": false,
 
   // Builds the browser client (/client.js) and the admin UI before dev and deploy.
   "build": {
