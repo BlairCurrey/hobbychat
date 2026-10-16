@@ -84,5 +84,6 @@ describe("cloudflareAccess", () => {
     expect(normalizeTeamDomain("myteam")).toBe(TEAM);
     expect(normalizeTeamDomain("myteam.cloudflareaccess.com")).toBe(TEAM);
     expect(normalizeTeamDomain("https://myteam.cloudflareaccess.com/")).toBe(TEAM);
+    expect(normalizeTeamDomain("myteam.cloudflareaccess.com.")).toBe(TEAM);
   });
 });

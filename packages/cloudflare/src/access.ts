@@ -45,7 +45,7 @@ function decodeSignature(segment: string): Uint8Array<ArrayBuffer> {
 
 /** `myteam`, `myteam.cloudflareaccess.com`, or `https://myteam.cloudflareaccess.com` → issuer URL. */
 export function normalizeTeamDomain(value: string): string {
-  let host = value.trim().replace(/^https?:\/\//, "").replace(/\/+$/, "");
+  let host = value.trim().replace(/^https?:\/\//, "").replace(/[/.]+$/, "");
   if (!host.includes(".")) host += ".cloudflareaccess.com";
   return `https://${host}`;
 }
